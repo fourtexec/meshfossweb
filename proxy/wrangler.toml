@@ -1,0 +1,8 @@
+# Cloudflare Worker: CORS-прокси MESHFOSS Web.  cd proxy && npx wrangler deploy
+name = "mesh-proxy"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+[vars]
+# Сайты, которым прокси отвечает (через запятую).
+ALLOWED_ORIGINS = "https://meshfoss.fourtexec.site,http://localhost:8787,http://127.0.0.1:8787"
