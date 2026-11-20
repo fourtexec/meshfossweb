@@ -3,7 +3,6 @@
 
 import { t, lang } from './i18n.js';
 import { parseIso, today, addDays } from './core.js';
-import { liquid, glare } from './glass.js';
 
 /** h('div.card#id', {attrs, on: {click}}, ...children) */
 export function h(tag, props = {}, ...children) {
@@ -63,14 +62,20 @@ export async function loadSprite() {
   } catch { /* без иконок интерфейс остаётся рабочим */ }
 }
 
-/** Стеклянная панель: класс .glass, преломление (если включено) и блик. */
-export function glass(node, { refract = false } = {}) {
+/**
+ * Стеклянная панель. По умолчанию её рисует рендер Liquid Glass Studio
+ * (studio.js, атрибут data-studio); { studio: false } — только CSS-стекло
+ * (для элементов поверх всего: уведомления, диалоги).
+ */
+export function glass(node, { studio = true } = {}) {
   node.classList.add('glass');
-  glare(node);
-  if (refract) {
-    node.dataset.liquid = '';
-    liquid(node);
-  }
+  if (studio) node.dataset.studio = '';
+  else node.classList.add('css-glass');
+  node.addEventListener('pointermove', (e) => {
+    const r = node.getBoundingClientRect();
+    node.style.setProperty('--gx', `${((e.clientX - r.left) / r.width) * 100}%`);
+    node.style.setProperty('--gy', `${((e.clientY - r.top) / r.height) * 100}%`);
+  }, { passive: true });
   return node;
 }
 
@@ -83,10 +88,10 @@ let toastTimer = null;
 export function toast(message, kind = 'info') {
   let node = document.getElementById('toast');
   if (!node) {
-    node = glass(h('div#toast', { role: 'status', 'aria-live': 'polite' }));
+    node = glass(h('div#toast', { role: 'status', 'aria-live': 'polite' }), { studio: false });
     document.body.append(node);
   }
-  node.className = `glass toast-${kind} show`;
+  node.className = `glass css-glass toast-${kind} show`;
   node.textContent = message;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => node.classList.remove('show'), 3800);
@@ -102,7 +107,7 @@ export function confirmDialog({ title, body, ok, cancel = t('common.cancel') }) 
       h('div.dialog-actions',
         h('button.btn.btn-text', { value: 'cancel', type: 'submit' }, cancel),
         h('button.btn.btn-filled', { value: 'ok', type: 'submit' }, ok)),
-    ), { refract: true });
+    ), { studio: false });
     dialog.append(panel);
     dialog.addEventListener('close', () => {
       resolve(dialog.returnValue === 'ok');

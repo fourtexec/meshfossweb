@@ -22,6 +22,7 @@
   --mark-orange: #e0721b;
   --mark-red: #d7344e;
   --mark-text: #ffffff;
+  --studio-tint: rgba(255, 255, 255, 0.34);
   --blob-1: #7c9bff;
   --blob-2: #ff8fc8;
   --blob-3: #5fe0c5;
@@ -57,6 +58,7 @@
     --mark-orange: #ffa25c;
     --mark-red: #ff7088;
     --mark-text: #0b1020;
+    --studio-tint: rgba(20, 26, 50, 0.5);
     --blob-1: #3b4cff;
     --blob-2: #c2338f;
     --blob-3: #0f9e8a;
@@ -87,6 +89,7 @@
   --mark-orange: #ffa25c;
   --mark-red: #ff7088;
   --mark-text: #0b1020;
+  --studio-tint: rgba(20, 26, 50, 0.5);
   --blob-1: #3b4cff;
   --blob-2: #c2338f;
   --blob-3: #0f9e8a;
@@ -197,8 +200,39 @@ button, input, select, textarea { font: inherit; color: inherit; }
   -webkit-mask-composite: xor;
   mask-composite: exclude;
 }
-/* При настоящем преломлении заливку делаем прозрачнее — фон виден через линзу. */
-.liquid [data-liquid]:not(.lens) { background: color-mix(in srgb, var(--glass-fill) 55%, transparent); }
+/* ---------------------------------------------- Liquid Glass Studio -- */
+/* Стекло и фон рисует WebGL-холст под страницей (assets/js/studio.js):
+   преломление, дисперсию, френель и блик — шейдеры Liquid Glass Studio.
+   DOM-элементы становятся прозрачными, поверх остаётся только их текст. */
+
+.studio-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; display: block; }
+.studio .backdrop { display: none; }
+.studio .glass:not(.css-glass) {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.studio .glass:not(.css-glass)::before,
+.studio .glass:not(.css-glass)::after { display: none; }
+
+/* Верхняя и нижняя панели неподвижны; содержимое прокручивается между ними
+   и плавно гаснет у краёв — стекло панелей преломляет обои, а не карточки. */
+.studio .topbar { position: fixed; left: 50%; transform: translateX(-50%); margin: 0; padding: 10px 22px 10px 14px; }
+.studio .content {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: calc(max(10px, env(safe-area-inset-top)) + 76px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent calc(max(10px, env(safe-area-inset-top)) + 52px), #000 calc(max(10px, env(safe-area-inset-top)) + 80px), #000 calc(100% - var(--nav-h) - 40px - env(safe-area-inset-bottom)), transparent calc(100% - var(--nav-h) - 12px - env(safe-area-inset-bottom)));
+  mask-image: linear-gradient(to bottom, transparent 0, transparent calc(max(10px, env(safe-area-inset-top)) + 52px), #000 calc(max(10px, env(safe-area-inset-top)) + 80px), #000 calc(100% - var(--nav-h) - 40px - env(safe-area-inset-bottom)), transparent calc(100% - var(--nav-h) - 12px - env(safe-area-inset-bottom)));
+}
+.studio .content > .view { width: min(760px, 100%); margin: 0 auto; }
+.studio .lens { background: color-mix(in srgb, var(--primary) 18%, transparent); box-shadow: none; }
+.studio .lens.dragging { background: transparent; }
+.studio .material { background: color-mix(in srgb, var(--glass-fill-strong) 45%, transparent); }
 
 /* ------------------------------------------------------------ каркас -- */
 
