@@ -24,6 +24,9 @@ test('прокси: 302 с URL в теле → 200 + X-Mesh-Status, заголо
     seen.url = url;
     seen.auth = init.headers.get('authorization');
     seen.cookie = init.headers.get('cookie');
+    seen.referer = init.headers.get('referer');
+    seen.origin = init.headers.get('origin');
+    seen.site = init.headers.get('sec-fetch-site');
     seen.redirect = init.redirect;
     return new Response('https://school.mos.ru/api/launcher/v1/launch?x=1', { status: 302, headers: { 'Content-Type': 'application/json' } });
   });
@@ -36,9 +39,21 @@ test('прокси: 302 с URL в теле → 200 + X-Mesh-Status, заголо
     assert.equal(await res.text(), 'https://school.mos.ru/api/launcher/v1/launch?x=1');
     assert.equal(seen.url, 'https://school.mos.ru/api/ej/partners/v1/homeworks/launch?homework_entry_id=1&material_id=m');
     assert.equal(seen.auth, 'Bearer abc.def.ghi');
-    assert.equal(seen.cookie, 'aupd_token=abc.def.ghi');
+    assert.match(seen.cookie, /^aupd_token=abc\.def\.ghi;/);
+    assert.equal(seen.referer, 'https://school.mos.ru/diary/homeworks/homeworks/');
+    assert.equal(seen.origin, null, 'GET с того же сайта идёт без Origin, как в Chrome');
+    assert.equal(seen.site, 'same-origin');
     assert.equal(seen.redirect, 'manual');
   } finally {
     fake.mock.restore();
   }
+});
+
+test('прокси: заголовки как у веб-дневника', async () => {
+  const { browserHeaders } = await import('../proxy/worker.js');
+  const post = browserHeaders('/api/family/materials/v1/additional_materials', 'POST');
+  assert.equal(post.Origin, 'https://school.mos.ru');
+  assert.equal(post.Referer, 'https://school.mos.ru/diary/homeworks/homeworks/');
+  assert.equal(browserHeaders('/api/family/web/v1/schedule', 'GET').Referer, 'https://school.mos.ru/diary/schedules/day/');
+  assert.equal(browserHeaders('/v2/token/refresh', 'GET')['Sec-Fetch-Mode'], 'navigate');
 });

@@ -7,7 +7,12 @@
   оценки, ДЗ и отметка «выполнено», ЦДЗ: `additional_materials`, LRS, launch,
   рейтинг, обновление токена) — остальное 404;
 - пересылает только нужные заголовки (`Authorization`, `Profile-Id`,
-  `X-Mes-*`, …), ставит браузерный User-Agent и cookie `aupd_token`;
+  `X-Mes-*`, …);
+- для school.mos.ru запрос выглядит как запрос самой страницы веб-дневника:
+  `Referer` нужной страницы дневника, `Origin: https://school.mos.ru` (для
+  POST/DELETE, как в Chrome), `Sec-Fetch-Site: same-origin`, `sec-ch-ua`,
+  User-Agent Chrome и те же куки, что ставит фронтенд (`aupd_token`, …).
+  Из браузера так сделать нельзя: скриптам запрещено задавать эти заголовки;
 - превращает любой 3xx в `200` с `X-Mesh-Status` / `X-Mesh-Location` — иначе
   браузер не даст прочитать тело ответа `partners/v1/homeworks/launch`, где МЭШ
   передаёт ссылку на ЦДЗ;

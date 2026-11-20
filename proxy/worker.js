@@ -37,6 +37,44 @@ const DEFAULT_ORIGINS = [
 const USER_AGENT =
   'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Mobile Safari/537.36';
 
+/** Страница веб-дневника, с которой этот запрос делает сам school.mos.ru (для Referer). */
+const DIARY_PAGES = [
+  [/^\/api\/family\/web\/v1\/schedule/, '/diary/schedules/day/'],
+  [/^\/api\/family\/web\/v1\/marks/, '/diary/marks/current-marks/'],
+  [/^\/api\/(family\/web\/v1\/homeworks|family\/materials|ej\/partners|lrs)/, '/diary/homeworks/homeworks/'],
+  [/^\/api\/(ej\/rating|gamification)/, '/diary/rating/'],
+];
+
+/**
+ * Заголовки, которые браузер сам ставит на fetch из веб-дневника school.mos.ru:
+ * запрос выглядит как обычный same-origin запрос страницы дневника, а не
+ * как запрос с чужого сайта. Из браузера их подделать нельзя (Origin, Referer
+ * и Sec-* запрещено задавать скриптам), поэтому это делает прокси.
+ */
+export function browserHeaders(path, method) {
+  const page = DIARY_PAGES.find(([re]) => re.test(path))?.[1] || '/diary/';
+  const headers = {
+    'User-Agent': USER_AGENT,
+    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+    Referer: UPSTREAM + page,
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Dest': 'empty',
+    'sec-ch-ua': '"Chromium";v="147", "Google Chrome";v="147", "Not.A/Brand";v="99"',
+    'sec-ch-ua-mobile': '?1',
+    'sec-ch-ua-platform': '"Android"',
+  };
+  // Chrome добавляет Origin к same-origin запросам, кроме GET/HEAD.
+  if (method !== 'GET' && method !== 'HEAD') headers.Origin = UPSTREAM;
+  // Токен обновляется переходом на страницу, а не fetch-запросом.
+  if (path === '/v2/token/refresh') {
+    headers['Sec-Fetch-Mode'] = 'navigate';
+    headers['Sec-Fetch-Dest'] = 'document';
+    headers.Referer = `${UPSTREAM}/`;
+  }
+  return headers;
+}
+
 function allowedOrigins(env) {
   const raw = env?.ALLOWED_ORIGINS;
   if (!raw) return DEFAULT_ORIGINS;
@@ -81,15 +119,17 @@ export async function handle(request, env = {}) {
     return new Response('method not allowed', { status: 405, headers: cors });
   }
 
-  const upstreamHeaders = new Headers({ 'User-Agent': USER_AGENT, 'Accept-Language': 'ru-RU,ru;q=0.9' });
+  const upstreamHeaders = new Headers(browserHeaders(path, request.method));
   for (const name of FORWARD_HEADERS) {
     const value = request.headers.get(name);
     if (value) upstreamHeaders.set(name, value);
   }
   const auth = request.headers.get('authorization') || '';
   const token = auth.replace(/^Bearer\s+/i, '').trim();
-  // Часть методов МЭШ (как и веб-дневник) смотрит ещё и на cookie aupd_token.
-  if (token && /^[A-Za-z0-9._~+/=-]+$/.test(token)) upstreamHeaders.set('Cookie', `aupd_token=${token}`);
+  // Веб-дневник шлёт токен и в cookie: те же куки, что ставит фронтенд school.mos.ru.
+  if (token && /^[A-Za-z0-9._~+/=-]+$/.test(token)) {
+    upstreamHeaders.set('Cookie', `aupd_token=${token}; auth_flag=main; subsystem_id=2; aupd_current_role=2:2`);
+  }
 
   const body = request.method === 'POST' ? await request.arrayBuffer() : undefined;
   let upstream;
