@@ -9,7 +9,7 @@ import {
   h, icon, button, glass, toast, confirmDialog, spinner, emptyState, errorState, daySelector,
   segmented, markBadge, formatDayShort,
 } from './ui.js';
-import { refractionSupported } from './glass.js';
+import { studioSupported } from './studio.js';
 
 export function describeError(e) {
   switch (e?.code) {
@@ -341,7 +341,7 @@ export function settingsView(app) {
       h('h3', icon('sparkles'), t('settings.appearance')),
       row(t('settings.theme'), select(s.theme, [['auto', t('settings.theme.auto')], ['dark', t('settings.theme.dark')], ['light', t('settings.theme.light')]],
         (v) => app.updateSettings({ theme: v }))),
-      row(t('settings.glass'), toggle(s.liquid, (v) => app.updateSettings({ liquid: v }), !refractionSupported()), t('settings.glassHint')),
+      row(t('settings.glass'), toggle(s.liquid, (v) => app.updateSettings({ liquid: v }), !studioSupported()), t('settings.glassHint')),
       row(t('settings.language'), select(lang(), Object.entries(LANGS), (v) => app.updateSettings({ lang: v }))))),
     glass(h('div.card.settings-card',
       h('h3', icon('server'), t('settings.connection')),
@@ -359,7 +359,7 @@ export function settingsView(app) {
     glass(h('div.card.settings-card',
       h('h3', icon('info'), t('settings.about')),
       h('p.muted', t('settings.aboutText')),
-      h('p', h('a', { href: 'https://github.com/photonest444/meshfossweb', target: '_blank', rel: 'noopener' }, icon('external-link'), t('settings.source')),
+      h('p', h('a', { href: 'https://github.com/fourtexec/meshfossweb', target: '_blank', rel: 'noopener' }, icon('external-link'), t('settings.source')),
         ' · ', h('a', { href: 'https://github.com/fourtexec/MESHFOSS', target: '_blank', rel: 'noopener' }, 'MESHFOSS (Android)')))),
   );
 }
@@ -403,7 +403,7 @@ export function loginView(app, { error } = {}) {
       h('div.divider'),
       h('button.btn.btn-tonal.wide', { type: 'button', on: { click: () => app.startDemo() } }, icon('sparkles'), h('span', t('login.demo'))),
       h('p.muted.small.center', t('login.demoHint')),
-      h('div.login-foot', select(lang(), (v) => app.updateSettings({ lang: v })))), { refract: true }),
+      h('div.login-foot', select(lang(), (v) => app.updateSettings({ lang: v }))))),
   );
 
   function select(value, onChange) {

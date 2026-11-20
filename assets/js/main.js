@@ -5,7 +5,7 @@ import { createDemoFetch, DEMO_TOKEN } from './demo.js';
 import { extractToken, looksLikeToken } from './core.js';
 import { t, setLang, detectLang } from './i18n.js';
 import { h, icon, glass, loadSprite, toast } from './ui.js';
-import { setLiquidEnabled, refractionSupported } from './glass.js';
+import { setStudioEnabled } from './studio.js';
 import { scheduleView, homeworksView, marksView, rankingView, settingsView, loginView } from './views.js';
 
 const STORE_KEY = 'meshfoss.web.v1';
@@ -51,7 +51,7 @@ class App {
     const theme = this.settings.theme;
     if (theme === 'auto') delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = theme;
-    setLiquidEnabled(this.settings.liquid);
+    setStudioEnabled(this.settings.liquid);
     document.title = 'MESHFOSS';
   }
 
@@ -163,7 +163,6 @@ class App {
     this.currentView?.cleanup?.();
     this.currentView = null;
     this.root.replaceChildren(loginView(this, { error }));
-    setLiquidEnabled(this.settings.liquid);
   }
 
   route() {
@@ -177,12 +176,11 @@ class App {
         this.demo ? h('span.chip', t('common.demoBadge')) : null),
       h('div.student-mini', h('span', this.student.shortName || this.student.name),
         this.student.className ? h('span.muted.small', this.student.className) : null),
-    ), { refract: true });
+    ));
     this.main = h('main.content', { id: 'content', tabindex: '-1' });
     this.nav = this.buildNav();
     this.root.replaceChildren(header, this.main, this.nav);
     this.renderView();
-    setLiquidEnabled(this.settings.liquid);
   }
 
   renderView() {
@@ -204,12 +202,12 @@ class App {
    * Android-версии: её можно тянуть пальцем, она прилипает к ближайшей вкладке.
    */
   buildNav() {
-    const lens = h('div.lens', { 'aria-hidden': 'true', dataset: { glassThickness: '14', glassBlur: '0px' } });
+    // Линза — отдельная фигура Studio, слитая с панелью через smin: при
+    // перетаскивании она выпячивается из панели, как вторая фигура в Studio.
+    const lens = h('div.lens', { 'aria-hidden': 'true', dataset: { studio: '' } });
     // draggable=false: иначе нативное перетаскивание ссылки отменяет жест линзы (pointercancel).
     const tabs = TABS.map(([key, ic, label]) => h('a.tab', { href: `#/${key}`, draggable: 'false', dataset: { tab: key } }, icon(ic), h('span', t(label))));
-    const nav = glass(h('nav.tabbar', { 'aria-label': 'MESHFOSS' }, lens, ...tabs), { refract: true });
-    lens.dataset.liquid = '';
-    import('./glass.js').then(({ liquid }) => liquid(lens));
+    const nav = glass(h('nav.tabbar', { 'aria-label': 'MESHFOSS' }, lens, ...tabs));
     let drag = null;
     nav.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -226,7 +224,7 @@ class App {
       const w = lens.offsetWidth;
       const x = Math.max(4, Math.min(r.width - w - 4, e.clientX - r.left - w / 2));
       lens.classList.add('dragging');
-      lens.style.transform = `translateX(${x}px) scale(1.12)`;
+      lens.style.transform = `translateX(${x}px) scale(1.18, 1.32)`;
     });
     const end = (e) => {
       if (!drag || drag.id !== e.pointerId) return;
@@ -275,5 +273,3 @@ app.start().catch((e) => {
   console.error(e);
   app.renderLogin(e?.message);
 });
-
-if (!refractionSupported()) document.documentElement.classList.add('no-refraction');

@@ -15,12 +15,13 @@
 - **Рейтинг** класса.
 - **Демо-режим** на синтетических данных — без аккаунта и прокси.
 - 5 языков (ru, en, hu, es, fr), светлая и тёмная темы.
-- **Жидкое стекло**: преломление по формуле
-  [Liquid Glass Studio](https://github.com/iyinchao/liquid-glass-studio)
-  (SDF скруглённого прямоугольника, закон Снеллиуса, RGB-дисперсия), запечённое
-  в SVG-карту смещения и применённое как `backdrop-filter` к настоящему DOM.
-  Нижняя панель с линзой, которую можно тянуть, — как в Android-версии.
-  Браузеры без `backdrop-filter: url()` получают матовое стекло.
+- **Жидкое стекло** на шейдерах [Liquid Glass Studio](https://github.com/iyinchao/liquid-glass-studio)
+  (WebGL2): фон и стекло рисует холст под страницей — проход фона, гауссово
+  размытие и финальный шаг `fragment-main.glsl` Studio (преломление по
+  Снеллиусу, RGB-дисперсия, френель, блик, суперэллипсные углы). Стеклянные
+  элементы страницы — фигуры Studio, слитые через `smin`; линза нижней панели
+  при перетаскивании выпячивается из неё, как вторая фигура в Studio. Без
+  WebGL2 или с выключенной настройкой — матовое CSS-стекло.
 - Иконки — Lucide из [iconkit](https://github.com/fourtexec/iconkit) (ISC).
 
 Без сборки и зависимостей: чистые ES-модули, хостится как статика (GitHub Pages).
@@ -34,7 +35,7 @@ CORS-заголовки. Поэтому нужен **свой прокси**; т
 ### Вариант 1. Локально (проще всего)
 
 ```bash
-git clone https://github.com/photonest444/meshfossweb
+git clone https://github.com/fourtexec/meshfossweb
 ```
 
 ```bash
@@ -74,7 +75,7 @@ index.html              оболочка
 assets/js/core.js       разбор ответов МЭШ и логика ЦДЗ (порт MeshCore.kt / Cdz.kt)
 assets/js/api.js        HTTP-клиент через прокси (порт MeshClient.kt)
 assets/js/demo.js       мок school.mos.ru для демо-режима
-assets/js/glass.js      жидкое стекло (порт оптики Liquid Glass Studio)
+assets/js/studio.js     жидкое стекло: WebGL-рендер на шейдерах Liquid Glass Studio
 assets/js/views.js      экраны
 assets/js/main.js       состояние, маршруты, навигация с линзой
 assets/js/i18n.js       переводы
@@ -105,4 +106,5 @@ node tools/build-icons.mjs ../iconkit
 
 GPLv3, см. [`LICENSE`](LICENSE). Иконки Lucide — ISC
 ([`assets/icons/LICENSE-lucide.txt`](assets/icons/LICENSE-lucide.txt)).
-Оптика стекла основана на Liquid Glass Studio (MIT).
+Шейдеры стекла — из Liquid Glass Studio (MIT,
+[`assets/vendor/liquid-glass-studio/LICENSE`](assets/vendor/liquid-glass-studio/LICENSE)).
