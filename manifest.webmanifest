@@ -1,0 +1,10 @@
+{
+  "name": "MESHFOSS",
+  "short_name": "MESHFOSS",
+  "description": "Свободный клиент МЭШ: расписание, ДЗ и ЦДЗ, оценки, рейтинг.",
+  "start_url": "./#/schedule",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#3d5afe",
+  "icons": [{ "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
